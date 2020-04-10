@@ -417,16 +417,18 @@ export default {
       if (newVal != "") {
         let robotNames = newVal.split(",");
         for (let i = 0; i < robotNames.length; i++) {
-          let newRobot = {
-            id: this.rand(),
-            name: robotNames[i],
-            color: this.colors[i],
-            x: 0,
-            y: 0,
-            round: 0,
-            presents: 0
-          };
-          this.robots.push(newRobot);
+          if (robotNames[i]){
+            let newRobot = {
+              id: this.rand(),
+              name: robotNames[i],
+              color: this.colors[i],
+              x: 0,
+              y: 0,
+              round: 0,
+              presents: 0
+            };
+            this.robots.push(newRobot);
+          }
         }
       }
     }
