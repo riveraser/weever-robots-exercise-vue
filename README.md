@@ -32,9 +32,9 @@ Press on ``Run``
 
 ![running](public/img/running.png)
 
-The simulations is running and moving the Robots arround the grid based on the movements (Little squares with random colors)
+The simulation is running and moving the Robots arround the grid based on the movements (Little squares with random colors)
 
-I show the wich robot should move and what movement should be done.
+I show which robot should move and what movement should be done.
 
 I am also showing the current Robot position on the grid.
 
