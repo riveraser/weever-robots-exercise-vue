@@ -55,7 +55,10 @@
             </b-form-group>
           </div>
           <div v-else class="mb-2" >
-              <p v-if="doneRunning ">Simulation done!!</p>
+              <div v-if="doneRunning ">
+                <h4>Simulation done!!</h4>
+                <small>Total presents delivered by the Robots: <b>{{totalDelivered}}</b></small>
+              </div>
               <p v-else>Running simulation: <br><small>(seconds to next step)</small> </p>
               <b-progress :value="myCurrentTimer" :max="myTimer" animated></b-progress>
           </div>
@@ -65,7 +68,7 @@
             variant="primary"
             :disabled="!canStart"
             class="mr-1"
-          >Submit</b-button>
+          >Run</b-button>
           <b-button type="reset" variant="danger">Reset</b-button>
         </b-form>
         <h4 class="mt-2">Robots:</h4>
@@ -90,12 +93,13 @@
             ></b-avatar>
           </div>
         </div>
-        <div v-if="doneRunning">
+        <div v-if="doneRunning" class="mt-2" >
+           
            <b-form-group
               id="input-group-2"
               label="Search for presents received:"
               label-for="movements"
-              :description="`Houses that received at least ${searchPresents} presents`"
+              :description="`Houses that received at least ${searchPresents} present` + (searchPresents>1 ?'s':'')"
             >
             <b-form-input
                 id="searchPresents"
@@ -109,8 +113,18 @@
               type="button"
               variant="primary"
               class="mr-1"
-              
+              :disabled="!searchPresents>0"
+              @click="searchForPresents"
             >Search</b-button>
+
+            <div class="mt-2" >
+              <div v-for="(value, name, index) in searchResults" :key="index" class="text-left m-2 " >
+               <small>House{{value > 1 ? 's': ''}} with <b>{{name}}</b> present{{  name > 1 ? 's': ''}} :  {{value}}</small>
+              </div>
+              <p v-if="Object.entries(searchResults).length == 0">
+                No results
+              </p>
+            </div>
 
         </div>
       </b-col>
@@ -147,7 +161,8 @@ export default {
         "hotpink",
         "hotpink"
       ],
-      houses: [],
+      houses: [], //This is for the visible houses shown in the grid
+      hiddenHouses:[], //This is for houses outside the grid... robots can go out of the boundary
       robotNames: "Bob",
       robots: [
         {
@@ -176,17 +191,19 @@ export default {
           { text: 'Rabbit', value: 500, },
           { text: 'Cheetah', value: 100}
         ],
-      searchPresents: 1
+      searchPresents: 1,
+      searchResults: [],
+      totalDelivered: 0
     };
   },
   mounted() {
     let col = 1;
     let row = 1;
-
-    let maxGridQuarter = 26;
-
+    
+    let maxGridQuarter = this.$store.state.gridBoundery;
+    
     //lets create a grid of 51 by 51
-    for (let i = 0; i < 51 * 51; i++) {
+    for (let i = 0; i < this.$store.state.gridDimension * this.$store.state.gridDimension; i++) {
       let newHouse = {
         id: i,
         presents: 0,
@@ -236,6 +253,9 @@ export default {
       clearInterval(this.myInterval);
       this.doneRunning = false;
       this.houses.forEach(house=>house.presents =0);
+      this.hiddenHouses = [];
+      this.searchResults = [];
+      this.totalDelivered = 0;
     },
     onSubmit(evt) {
       evt.preventDefault();
@@ -283,14 +303,36 @@ export default {
           
           //Now we find the house and set a new present
           let houseFound = this.houses.find(house=> house.x == currentBot.x && house.y == currentBot.y);
-          houseFound.presents += 1;
+          
+          //In visible grid then we add the present
+          if(houseFound){
+            houseFound.presents += 1;
+          } else {
+            //We did not found the visible house? then query hiddenHouses
+            let hiddenFound = this.hiddenHouses.find(house=> house.x == currentBot.x && house.y == currentBot.y);
+
+            if (hiddenFound){
+              hiddenFound.presents += 1;
+            } else {
+              let newHiddenHouse ={
+                id: this.rand(),
+                presents: 1,
+                col: 0,
+                row: 0,
+                x: currentBot.x,
+                y: currentBot.y
+              }
+              this.hiddenHouses.push(newHiddenHouse);
+            }
+
+          }
 
         }
-        
-        
         this.currentRound++;
         this.currentRobot++;
       } else {
+
+        this.totalDelivered = this.robots.reduce((sum, robot) => sum + robot.presents, 0);
         this.doneRunning = true;
         clearInterval(this.myInterval);
       }
@@ -349,6 +391,22 @@ export default {
     },
     rand(){
       return Math.floor(Math.random() * 10000);
+    },
+    searchForPresents(){
+      let combinedHouses = this.houses.concat(this.hiddenHouses);
+      this.searchResults = combinedHouses.filter(house => house.presents > 0 &&  this.searchPresents <= house.presents );
+      
+      let arrCounts={};
+      this.searchResults.forEach(house=>{
+        if (arrCounts[house.presents]){
+          arrCounts[house.presents] ++;
+        } else {
+          arrCounts[house.presents] = 1;
+        }
+
+      });
+      this.searchResults = arrCounts;
+      //console.log(Object.entries(this.searchResults).length === 0);
     }
   },
   watch: {
@@ -377,13 +435,6 @@ export default {
 </script>
 
 <style lang="less">
-.test {
-  border: 1px solid red;
-}
-
-.test1 {
-  border: 1px solid blue;
-}
 
 .grid {
   display: flex;
@@ -391,12 +442,14 @@ export default {
   flex-wrap: wrap;
 
   margin: 10px;
-  margin-right: 0;
+  margin-left: auto;
+  margin-right: auto;
   position: relative;
   border: none;
   border-right: 1px solid black;
   border-bottom: 1px solid black;
   line-height: 0;
+  max-width: 800px;
 
   .row {
     margin-right: 0;

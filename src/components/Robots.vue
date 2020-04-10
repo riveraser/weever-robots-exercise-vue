@@ -1,7 +1,7 @@
 <template>
     <div class="robot" 
         :style="`background-color:${robot.color}; left: ${left}; top: ${top};`"
-        v-b-tooltip.hover :title="robot.name"
+        v-b-tooltip.hover :title="robot.name + ' | Presents: ' + robot.presents "
     >
     </div>
 </template>
