@@ -21,7 +21,7 @@ export default {
             if ( this.robot.x ==0)
                 return "calc(50% - 4px)";
             else {
-                let newPos = 50 - (1.96 * this.robot.x);
+                let newPos = 50 + (1.96 * this.robot.x);
                 return `calc(${newPos}% - 4px)`;
             }
         },
@@ -37,19 +37,15 @@ export default {
     methods:{
         moveLeft(){
             this.robot.x -= 1;
-            console.log( `Moving ${this.robot.name} to the left`);
         },
         moveUp(){
             this.robot.y -= 1;
-            console.log( `Moving ${this.robot.name} up`);
         },
         moveRight(){
             this.robot.x += 1;
-            console.log( `Moving ${this.robot.name} to the right`);
         },
         moveDown(){
             this.robot.y += 1;
-            console.log( `Moving ${this.robot.name} to down`);
         },
     }
 }
